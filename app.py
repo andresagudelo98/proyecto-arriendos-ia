@@ -2,45 +2,53 @@ import streamlit as st
 import joblib
 import pandas as pd
 import numpy as np
-import os
 
-# 1. Cargar modelo y columnas (usando ruta relativa para que funcione en cualquier lado)
-# Si el archivo está en la misma carpeta que app.py, no necesita ruta larga.
+# 1. Cargar modelo y columnas
+# Asegúrate de que estos archivos estén en la misma carpeta que app.py en GitHub
 modelo = joblib.load('modelo_arriendos.pkl')
 columnas_modelo = joblib.load('columnas_modelo.pkl')
 
 st.title("Predicción de Precios de Arriendo")
+st.write("Ingresa los datos para clasificar el inmueble.")
 
-# 2. Inputs
-bedrooms = st.number_input("Habitaciones", 1, 10, 2)
-bathrooms = st.number_input("Baños", 1, 5, 1)
-surface = st.number_input("Superficie Total (m2)", 20, 500, 50)
-l3 = st.selectbox("Ciudad/Sector", ["Medellín", "Bogotá D.C", "Envigado"])
+# 2. Inputs para el usuario
+bedrooms = st.number_input("Habitaciones", min_value=1, max_value=10, value=2)
+bathrooms = st.number_input("Baños", min_value=1, max_value=5, value=1)
+surface = st.number_input("Superficie Total (m2)", min_value=20, max_value=500, value=50)
 
+# Agrega aquí todas las ciudades que estaban en tu dataset original
+lista_ciudades = ["Medellín", "Bogotá D.C", "Envigado", "Manizales", "Cali", "Barranquilla", "Pereira"]
+l3 = st.selectbox("Ciudad/Sector", lista_ciudades)
 
+# 3. Lógica de predicción
 if st.button("Predecir Precio"):
-    # 1. Crear un diccionario con ceros para TODAS las columnas del modelo
-    # Esto asegura que el DataFrame tenga exactamente las 151 columnas
+    # Crear un diccionario inicializado con ceros para TODAS las columnas del modelo
+    # Esto evita el KeyError y garantiza que el DataFrame sea correcto
     input_data = {col: 0 for col in columnas_modelo}
     
-    # 2. Llenar los valores básicos
+    # Llenar valores numéricos
     input_data['bedrooms'] = bedrooms
     input_data['bathrooms'] = bathrooms
     input_data['surface_total'] = surface
     
-    # 3. Llenar la columna de la ciudad seleccionada
-    # IMPORTANTE: El nombre debe coincidir exactamente con el que está en columnas_modelo
-    # Probemos con el formato que vimos en tu archivo: 'l3_Medellín'
-    col_ciudad = f"l3_{l3}" 
-    if col_ciudad in input_data:
-        input_data[col_ciudad] = 1
+    # Llenar la ubicación seleccionada dinámicamente
+    # Busca la columna que contenga el nombre de la ciudad
+    encontrado = False
+    for col in columnas_modelo:
+        if l3.lower() in col.lower():
+            input_data[col] = 1
+            encontrado = True
+            break
     
-    # 4. Crear el DataFrame y ORDENARLO exactamente como el modelo espera
+    # Crear el DataFrame
     input_df = pd.DataFrame([input_data])
-    input_df = input_df[columnas_modelo] # Ahora sí tiene las 151 columnas
     
-    # 5. Predecir
+    # Ordenar columnas según lo que espera el modelo
+    input_df = input_df[columnas_modelo]
+    
+    # Predicción
     prediccion = modelo.predict(input_df)
     
+    # Mostrar resultado
     resultado = "Precio Alto" if prediccion[0] == 1 else "Precio Bajo"
-    st.write(f"### El resultado es: **{resultado}**")
+    st.write(f"### El resultado de la clasificación es: **{resultado}**")
