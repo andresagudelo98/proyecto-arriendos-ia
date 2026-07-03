@@ -21,13 +21,12 @@ bathrooms = st.number_input("Baños", min_value=1, max_value=5, value=1)
 surface = st.number_input("Superficie Total (m2)", min_value=20, max_value=500, value=50)
 
 if st.button("Predecir Precio"):
-    # Preparar los datos
-    input_data = pd.DataFrame([[bedrooms, bathrooms, surface]], 
-                              columns=['bedrooms', 'bathrooms', 'surface_total'])
+    # 1. Crear el DataFrame con los nombres correctos que espera tu modelo
+    input_data = pd.DataFrame([[bedrooms, bathrooms, surface]], columns=columnas_modelo)
     
-    # Realizar la predicción
+    # 2. Realizar la predicción
     prediccion = modelo.predict(input_data)
     
-    # Mostrar el resultado
+    # 3. Mostrar el resultado
     resultado = "Precio Alto" if prediccion[0] == 1 else "Precio Bajo"
     st.write(f"### El resultado de la clasificación es: **{resultado}**")
