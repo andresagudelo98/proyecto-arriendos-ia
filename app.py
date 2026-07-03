@@ -1,14 +1,33 @@
 import streamlit as st
 import joblib
-import os
+import pandas as pd
+import numpy as np
 
-# Esta línea busca el modelo exactamente en la misma carpeta donde está app.py
-# Esto funciona tanto en tu PC como en la nube de Streamlit.
-nombre_archivo_modelo = 'modelo_arriendos.pkl'
-
+# Cargar el modelo y las columnas directamente desde la carpeta del repositorio
+# Al no poner ruta absoluta, Streamlit los buscará en la misma carpeta que app.py
 try:
-    # Carga el modelo
-    modelo = joblib.load(nombre_archivo_modelo)
+    modelo = joblib.load('modelo_arriendos.pkl')
+    columnas_modelo = joblib.load('columnas_modelo.pkl')
 except FileNotFoundError:
-    st.error(f"Error: No se encontró el archivo '{nombre_archivo_modelo}'. Asegúrate de que esté en la raíz del repositorio.")
+    st.error("No se encontraron los archivos del modelo en la carpeta del repositorio.")
     st.stop()
+
+st.title("Predicción de Precios de Arriendo")
+st.write("Esta aplicación determina si un inmueble es de **Precio Alto** o **Precio Bajo**.")
+
+# Inputs para el usuario
+bedrooms = st.number_input("Habitaciones", min_value=1, max_value=10, value=2)
+bathrooms = st.number_input("Baños", min_value=1, max_value=5, value=1)
+surface = st.number_input("Superficie Total (m2)", min_value=20, max_value=500, value=50)
+
+if st.button("Predecir Precio"):
+    # Preparar los datos
+    input_data = pd.DataFrame([[bedrooms, bathrooms, surface]], 
+                              columns=['bedrooms', 'bathrooms', 'surface_total'])
+    
+    # Realizar la predicción
+    prediccion = modelo.predict(input_data)
+    
+    # Mostrar el resultado
+    resultado = "Precio Alto" if prediccion[0] == 1 else "Precio Bajo"
+    st.write(f"### El resultado de la clasificación es: **{resultado}**")
