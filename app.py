@@ -17,24 +17,29 @@ bathrooms = st.number_input("Baños", 1, 5, 1)
 surface = st.number_input("Superficie Total (m2)", 20, 500, 50)
 l3 = st.selectbox("Ciudad/Sector", ["Medellín", "Bogotá D.C", "Envigado"])
 
+
 if st.button("Predecir Precio"):
-    # 3. Preparación de datos con Dummies
-    # Creamos la estructura base
-    input_dict = {
-        'bedrooms': bedrooms,
-        'bathrooms': bathrooms,
-        'surface_total': surface,
-        'l3_Medellín': 1 if l3 == "Medellín" else 0,
-        'l3_Bogotá D.C': 1 if l3 == "Bogotá D.C" else 0,
-        'l3_Envigado': 1 if l3 == "Envigado" else 0
-    }
+    # 1. Crear un diccionario con ceros para TODAS las columnas del modelo
+    # Esto asegura que el DataFrame tenga exactamente las 151 columnas
+    input_data = {col: 0 for col in columnas_modelo}
     
-    input_df = pd.DataFrame([input_dict])
+    # 2. Llenar los valores básicos
+    input_data['bedrooms'] = bedrooms
+    input_data['bathrooms'] = bathrooms
+    input_data['surface_total'] = surface
     
-    # IMPORTANTE: Aseguramos que las columnas estén en el orden exacto que el modelo espera
-    input_df = input_df[columnas_modelo]
+    # 3. Llenar la columna de la ciudad seleccionada
+    # IMPORTANTE: El nombre debe coincidir exactamente con el que está en columnas_modelo
+    # Probemos con el formato que vimos en tu archivo: 'l3_Medellín'
+    col_ciudad = f"l3_{l3}" 
+    if col_ciudad in input_data:
+        input_data[col_ciudad] = 1
     
-    # 4. Predicción
+    # 4. Crear el DataFrame y ORDENARLO exactamente como el modelo espera
+    input_df = pd.DataFrame([input_data])
+    input_df = input_df[columnas_modelo] # Ahora sí tiene las 151 columnas
+    
+    # 5. Predecir
     prediccion = modelo.predict(input_df)
     
     resultado = "Precio Alto" if prediccion[0] == 1 else "Precio Bajo"
